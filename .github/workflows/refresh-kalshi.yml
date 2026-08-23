@@ -2,6 +2,11 @@ name: Refresh Kalshi market cache
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/fetch-kalshi.mjs"
+      - ".github/workflows/refresh-kalshi.yml"
   schedule:
     - cron: "17 * * * *"
 
