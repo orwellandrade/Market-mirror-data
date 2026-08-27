@@ -39,3 +39,5 @@ jobs:
           git add data/kalshi-markets.json
           git commit -m "Refresh Kalshi market snapshot"
           git push
+
+# Manual refresh requested 2026-08-27.
