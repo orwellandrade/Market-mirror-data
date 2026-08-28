@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { execFile } from "node:child_process";
 
 const run = promisify(execFile);
-const MAX_SCANNED = 100_000;
+const MAX_SCANNED = 500_000;
 const TARGET_LIMIT = 20_000;
 const PAGE_SIZE = 1_000;
 const HOSTS = [
