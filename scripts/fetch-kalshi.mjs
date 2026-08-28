@@ -1,12 +1,23 @@
 import { mkdir, writeFile } from "node:fs/promises";
 
-const LIMIT = 10_000;
+const MAX_SCANNED = 100_000;
+const TARGET_LIMIT = 20_000;
 const PAGE_SIZE = 1_000;
 const HOSTS = [
   "https://external-api.kalshi.com",
   "https://api.elections.kalshi.com",
 ];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isCongressional2026(market) {
+  const text = [market.title, market.subtitle, market.ticker, market.event_ticker]
+    .filter(Boolean)
+    .join(" ");
+  if (/primary|nominee|nomination|state house|state senate|legislature|general assembly/i.test(text)) return false;
+  const year = /2026|(?:HOUSE|SENATE)[A-Z]{2}D26|(?:HOUSE|SENATE).*26/i.test(text);
+  const federal = /u\.?s\.? (?:house|senate)|united states (?:house|senate)|congress|midterm|controlh|controls|(?:house|senate).{0,30}(?:election|seat|control|party)|\b[A-Z]{2}-?\d{1,2}\b/i.test(text);
+  return year && federal;
+}
 
 async function request(path) {
   let lastError = "request failed";
@@ -34,11 +45,12 @@ async function request(path) {
 }
 
 async function collect() {
-  const markets = [];
+  const targets = new Map();
   let cursor = "";
   let sourceHost = "";
+  let scanned = 0;
 
-  while (markets.length < LIMIT) {
+  while (scanned < MAX_SCANNED && targets.size < TARGET_LIMIT) {
     const query = new URLSearchParams({
       status: "open",
       mve_filter: "exclude",
@@ -50,14 +62,15 @@ async function collect() {
     sourceHost = new URL(host).hostname;
     const body = await response.json();
     const page = Array.isArray(body.markets) ? body.markets : [];
-    markets.push(...page);
+    scanned += page.length;
+    for (const market of page) if (isCongressional2026(market)) targets.set(market.ticker, market);
     cursor = body.cursor || "";
 
     if (!cursor || page.length === 0) break;
-    await wait(1_000);
+    await wait(750);
   }
 
-  const unique = [...new Map(markets.map((market) => [market.ticker, market])).values()].slice(0, LIMIT);
+  const markets = [...targets.values()];
   await mkdir("data", { recursive: true });
   await writeFile(
     "data/kalshi-markets.json",
@@ -66,14 +79,16 @@ async function collect() {
         generatedAt: new Date().toISOString(),
         source: sourceHost,
         status: "ok",
-        retrieved: unique.length,
-        markets: unique,
+        scanned,
+        retrieved: markets.length,
+        scope: "active 2026 U.S. House and Senate general-election markets",
+        markets,
       },
       null,
       2,
     ) + "\n",
   );
-  console.log(`Saved ${unique.length} open Kalshi markets from ${sourceHost}`);
+  console.log(`Scanned ${scanned} open Kalshi markets; saved ${markets.length} congressional markets from ${sourceHost}`);
 }
 
 collect().catch((error) => {
