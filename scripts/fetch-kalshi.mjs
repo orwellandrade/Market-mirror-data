@@ -15,12 +15,12 @@ const HOSTS = [
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalized = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 
-function isCongressional2026(market) {
+function isElection2026(market) {
   const text = [market.title, market.subtitle, market.ticker, market.event_ticker]
     .filter(Boolean)
     .join(" ");
-  if (/primary|nominee|nomination|state house|state senate|legislature|general assembly/i.test(text)) return false;
-  const year = /2026|(?:HOUSE|SENATE)[A-Z]{2}D26|(?:HOUSE|SENATE).*26/i.test(text);
+  if (/primary|nominee|nomination|lieutenant|state house|state senate|legislature|general assembly|margin of victory/i.test(text)) return false;
+  const year = /2026|(?:HOUSE|SENATE|GOV)[A-Z]{2}D?26|(?:HOUSE|SENATE|GOV).*26/i.test(text);
   const federal = /u\.?s\.? (?:house|senate)|united states (?:house|senate)|congress|midterm|controlh|controls|(?:house|senate).{0,30}(?:election|seat|control|party)|\b[A-Z]{2}-?\d{1,2}\b/i.test(text);
   return year && federal;
 }
@@ -108,7 +108,7 @@ async function collect() {
     const body = await response.json();
     const page = Array.isArray(body.markets) ? body.markets : [];
     scanned += page.length;
-    for (const market of page) if (isCongressional2026(market)) targets.set(market.ticker, market);
+    for (const market of page) if (isElection2026(market)) targets.set(market.ticker, market);
     cursor = body.cursor || "";
 
     if (!cursor || page.length === 0) break;
@@ -135,14 +135,14 @@ async function collect() {
         scanned,
         retrieved: markets.length,
         partyResolved,
-        scope: "active 2026 U.S. House and Senate general-election markets",
+        scope: "active 2026 U.S. House, Senate, and governor general-election markets",
         markets,
       },
       null,
       2,
     ) + "\n",
   );
-  console.log(`Scanned ${scanned}; saved ${markets.length} congressional markets; resolved ${partyResolved} parties`);
+  console.log(`Scanned ${scanned}; saved ${markets.length} election markets; resolved ${partyResolved} parties`);
 }
 
 collect().catch((error) => {
