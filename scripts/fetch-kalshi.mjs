@@ -21,7 +21,7 @@ function isElection2026(market) {
     .join(" ");
   if (/primary|nominee|nomination|lieutenant|state house|state senate|legislature|general assembly|margin of victory/i.test(text)) return false;
   const year = /2026|(?:HOUSE|SENATE|GOV)[A-Z]{2}D?26|(?:HOUSE|SENATE|GOV).*26/i.test(text);
-  const federal = /u\.?s\.? (?:house|senate)|united states (?:house|senate)|congress|midterm|controlh|controls|(?:house|senate).{0,30}(?:election|seat|control|party)|\b[A-Z]{2}-?\d{1,2}\b/i.test(text);
+  const federal = /u\.?s\.? (?:house|senate)|united states (?:house|senate)|congress|midterm|controlh|controls|(?:house|senate).{0,30}(?:election|seat|control|party)|(?:governor|gubernatorial).{0,30}(?:winner|election|race|party)|\bKXGOV[A-Z]{2}\b|\bGOVPARTY[A-Z]{2}\b|\b[A-Z]{2}-?\d{1,2}\b/i.test(text);
   return year && federal;
 }
 
