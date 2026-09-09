@@ -19,7 +19,7 @@ function isElection2026(market) {
   const text = [market.title, market.subtitle, market.ticker, market.event_ticker]
     .filter(Boolean)
     .join(" ");
-  if (/primary|nominee|nomination|lieutenant|state house|state senate|legislature|general assembly|margin of victory/i.test(text)) return false;
+  if (/primary|nominee|nomination|lieutenant|state house|state senate|legislature|general assembly/i.test(text)) return false;
   const year = /2026|(?:HOUSE|SENATE|GOV)[A-Z]{2}D?26|(?:HOUSE|SENATE|GOV).*26/i.test(text);
   const federal = /u\.?s\.? (?:house|senate)|united states (?:house|senate)|congress|midterm|controlh|controls|(?:house|senate).{0,30}(?:election|seat|control|party)|(?:governor|gubernatorial).{0,30}(?:winner|election|race|party)|\bKXGOV[A-Z]{2}\b|\bGOVPARTY[A-Z]{2}\b|\b[A-Z]{2}-?\d{1,2}\b/i.test(text);
   return year && federal;
@@ -115,6 +115,16 @@ async function collect() {
     await wait(750);
   }
 
+  // Always include the complete bracket set for margin markets used by Market Mirror.
+  for (const eventTicker of ["KXHOUSEPOPVOTEMARGIN-27NOV03"]) {
+    const query = new URLSearchParams({ event_ticker: eventTicker, status: "open", limit: "1000" });
+    const { response, host } = await request(`/trade-api/v2/markets?${query}`);
+    sourceHost = new URL(host).hostname;
+    const body = await response.json();
+    for (const market of Array.isArray(body.markets) ? body.markets : []) targets.set(market.ticker, market);
+    await wait(750);
+  }
+
   let fec = new Map();
   try { fec = await fecParties(); } catch (error) { console.warn(`FEC fallback unavailable: ${error.message}`); }
   const markets = [...targets.values()].map((market) => ({
@@ -135,7 +145,7 @@ async function collect() {
         scanned,
         retrieved: markets.length,
         partyResolved,
-        scope: "active 2026 U.S. House, Senate, and governor general-election markets",
+        scope: "active 2026 U.S. House, Senate, governor, and House popular-vote margin markets",
         markets,
       },
       null,
