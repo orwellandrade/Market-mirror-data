@@ -16,13 +16,21 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalized = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 
 function isElection2026(market) {
-  const text = [market.title, market.subtitle, market.ticker, market.event_ticker]
-    .filter(Boolean)
-    .join(" ");
+  const title = String(market.title || "");
+  const ticker = String(market.ticker || "");
+  const eventTicker = String(market.event_ticker || "");
+  const text = [title, market.subtitle, ticker, eventTicker].filter(Boolean).join(" ");
+  if (/KXHOUSEPOPVOTEMARGIN-27NOV03/i.test(eventTicker)) return true;
   if (/primary|nominee|nomination|lieutenant|state house|state senate|legislature|general assembly/i.test(text)) return false;
+  if (/receive at least|vote share|percentage of the vote|exactly \\d+ seats|above \\d+ seats|below \\d+ seats|seat count|how many|at least|more than|less than|margin of victory/i.test(title)) return false;
   const year = /2026|(?:HOUSE|SENATE|GOV)[A-Z]{2}D?26|(?:HOUSE|SENATE|GOV).*26/i.test(text);
-  const federal = /u\.?s\.? (?:house|senate)|united states (?:house|senate)|congress|midterm|controlh|controls|(?:house|senate).{0,30}(?:election|seat|control|party)|(?:governor|gubernatorial).{0,30}(?:winner|election|race|party)|\bKXGOV[A-Z]{2}\b|\bGOVPARTY[A-Z]{2}\b|\b[A-Z]{2}-?\d{1,2}\b/i.test(text);
-  return year && federal;
+  const control = /^(?:Will )?(?:Democrats?|Republicans?) win the (?:U\\.?S\\.? )?(?:House|Senate) in 2026\\?$/i.test(title) || /^(?:CONTROLH|CONTROLS)-2026/i.test(ticker);
+  const winner = /^who will win .*(?:house|senate|governor|gubernatorial) election\\?$/i.test(title)
+    || /^will .+ win the (?:house|senate|governor|gubernatorial) race (?:for|in) .+\\?$/i.test(title)
+    || /^will (?:the )?.+ (?:party )?win the governorship in .+\\??$/i.test(title)
+    || /^will .+ win (?:the )?.*(?:house|senate|governor|gubernatorial) (?:race|seat|election)\\?$/i.test(title)
+    || /^(?:.+ )?(?:house|senate|governor) winner\\?(?: \\(person\\))?$/i.test(title);
+  return year && (control || winner);
 }
 
 function explicitParty(market) {
