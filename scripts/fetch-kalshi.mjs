@@ -17,6 +17,12 @@ const EMMY_SERIES = [
   "KXEMMYDACTO", "KXEMMYDACTR", "KXEMMYDSACTO", "KXEMMYDSACTR", "KXEMMYDSERIES",
   "KXEMMYLIMITEDACTO", "KXEMMYLIMITEDACTR", "KXEMMYLSERIES",
 ];
+const OSCAR_SERIES = [
+  "KXOSCARPIC", "KXOSCARACTO", "KXOSCARACTR", "KXOSCARDIR", "KXOSCARANIMATED",
+  "KXOSCARASPLAY", "KXOSCARDOCU", "KXOSCARSPLAY", "KXOSCARSUPACTO", "KXOSCARSUPACTR",
+  "KXOSCARNOMPIC", "KXOSCARNOMACTO",
+];
+const AWARDS_SERIES = [...EMMY_SERIES, ...OSCAR_SERIES];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalized = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 
@@ -138,8 +144,8 @@ async function collect() {
     await wait(750);
   }
 
-  // The Sites runtime is rate-limited by Kalshi, so cache the exact Emmy series separately.
-  for (const seriesTicker of EMMY_SERIES) {
+  // The Sites runtime is rate-limited by Kalshi, so cache exact awards series separately.
+  for (const seriesTicker of AWARDS_SERIES) {
     const query = new URLSearchParams({ series_ticker: seriesTicker, status: "open", limit: "100" });
     const { response, host } = await request(`/trade-api/v2/markets?${query}`);
     sourceHost = new URL(host).hostname;
@@ -168,14 +174,14 @@ async function collect() {
         scanned,
         retrieved: markets.length,
         partyResolved,
-        scope: "active 2026 U.S. election and 78th Emmy Awards markets",
+        scope: "active 2026 U.S. election, 78th Emmy Awards, and 99th Academy Awards markets",
         markets,
       },
       null,
       2,
     ) + "\n",
   );
-  console.log(`Scanned ${scanned}; saved ${markets.length} election markets; resolved ${partyResolved} parties`);
+  console.log(`Scanned ${scanned}; saved ${markets.length} election and awards markets; resolved ${partyResolved} parties`);
 }
 
 collect().catch((error) => {
