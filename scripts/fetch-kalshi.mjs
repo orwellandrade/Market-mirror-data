@@ -12,6 +12,11 @@ const HOSTS = [
   "https://external-api.kalshi.com",
   "https://api.elections.kalshi.com",
 ];
+const EMMY_SERIES = [
+  "KXEMMYCACTO", "KXEMMYCACTR", "KXEMMYCSACTO", "KXEMMYCSACTR", "KXEMMYCSERIES",
+  "KXEMMYDACTO", "KXEMMYDACTR", "KXEMMYDSACTO", "KXEMMYDSACTR", "KXEMMYDSERIES",
+  "KXEMMYLIMITEDACTO", "KXEMMYLIMITEDACTR", "KXEMMYLSERIES",
+];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalized = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 
@@ -133,6 +138,16 @@ async function collect() {
     await wait(750);
   }
 
+  // The Sites runtime is rate-limited by Kalshi, so cache the exact Emmy series separately.
+  for (const seriesTicker of EMMY_SERIES) {
+    const query = new URLSearchParams({ series_ticker: seriesTicker, status: "open", limit: "100" });
+    const { response, host } = await request(`/trade-api/v2/markets?${query}`);
+    sourceHost = new URL(host).hostname;
+    const body = await response.json();
+    for (const market of Array.isArray(body.markets) ? body.markets : []) targets.set(market.ticker, market);
+    await wait(750);
+  }
+
   let fec = new Map();
   try { fec = await fecParties(); } catch (error) { console.warn(`FEC fallback unavailable: ${error.message}`); }
   const markets = [...targets.values()].map((market) => ({
@@ -153,7 +168,7 @@ async function collect() {
         scanned,
         retrieved: markets.length,
         partyResolved,
-        scope: "active 2026 U.S. House, Senate, governor, and House popular-vote margin markets",
+        scope: "active 2026 U.S. election and 78th Emmy Awards markets",
         markets,
       },
       null,
