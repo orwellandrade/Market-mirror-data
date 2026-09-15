@@ -22,7 +22,10 @@ const OSCAR_SERIES = [
   "KXOSCARASPLAY", "KXOSCARDOCU", "KXOSCARSPLAY", "KXOSCARSUPACTO", "KXOSCARSUPACTR",
   "KXOSCARNOMPIC", "KXOSCARNOMACTO",
 ];
-const AWARDS_SERIES = [...EMMY_SERIES, ...OSCAR_SERIES];
+const SOCCER_SERIES = [
+  "KXPREMIERLEAGUE", "KXLALIGA", "KXBUNDESLIGA", "KXSERIEA", "KXUCL",
+];
+const TARGETED_SERIES = [...EMMY_SERIES, ...OSCAR_SERIES, ...SOCCER_SERIES];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalized = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 
@@ -145,7 +148,7 @@ async function collect() {
   }
 
   // The Sites runtime is rate-limited by Kalshi, so cache exact awards series separately.
-  for (const seriesTicker of AWARDS_SERIES) {
+  for (const seriesTicker of TARGETED_SERIES) {
     const query = new URLSearchParams({ series_ticker: seriesTicker, status: "open", limit: "100" });
     const { response, host } = await request(`/trade-api/v2/markets?${query}`);
     sourceHost = new URL(host).hostname;
@@ -174,7 +177,7 @@ async function collect() {
         scanned,
         retrieved: markets.length,
         partyResolved,
-        scope: "active 2026 U.S. election, 78th Emmy Awards, and 99th Academy Awards markets",
+        scope: "active 2026 U.S. election, awards, and selected 2026-27 European soccer championship markets",
         markets,
       },
       null,
