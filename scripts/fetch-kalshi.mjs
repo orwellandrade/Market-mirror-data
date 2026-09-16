@@ -26,7 +26,8 @@ const SOCCER_SERIES = [
   "KXPREMIERLEAGUE", "KXLALIGA", "KXBUNDESLIGA", "KXSERIEA", "KXUCL", "KXBALLONDOR",
 ];
 const US_CHAMPIONSHIP_SERIES = ["KXNBA", "KXNHL", "KXMLB", "KXSB"];
-const TARGETED_SERIES = [...EMMY_SERIES, ...OSCAR_SERIES, ...SOCCER_SERIES, ...US_CHAMPIONSHIP_SERIES];
+const CRYPTO_EVENT_SERIES = ["KXTOKENLAUNCH", "KXSATOSHIBTCYEAR"];
+const TARGETED_SERIES = [...EMMY_SERIES, ...OSCAR_SERIES, ...SOCCER_SERIES, ...US_CHAMPIONSHIP_SERIES, ...CRYPTO_EVENT_SERIES];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalized = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 
@@ -178,7 +179,7 @@ async function collect() {
         scanned,
         retrieved: markets.length,
         partyResolved,
-        scope: "active 2026 U.S. election, awards, and selected soccer, NBA, NHL, MLB, and NFL championship markets",
+        scope: "active 2026 U.S. election, awards, selected sports championships, and non-price crypto event markets",
         markets,
       },
       null,
