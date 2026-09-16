@@ -179,7 +179,7 @@ async function collect() {
         scanned,
         retrieved: markets.length,
         partyResolved,
-        scope: "active 2026 U.S. election, awards, selected sports championships, and non-price crypto event markets",
+        scope: "active 2026 U.S. election, awards, selected sports championships, non-price crypto event, and mention markets",
         markets,
       },
       null,
