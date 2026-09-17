@@ -31,6 +31,14 @@ const TARGETED_SERIES = [...EMMY_SERIES, ...OSCAR_SERIES, ...SOCCER_SERIES, ...U
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalized = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 
+function isMentionMarket(market) {
+  const ticker = String(market.ticker || "");
+  const eventTicker = String(market.event_ticker || "");
+  const title = String(market.title || "");
+  return /MENTION|TRUMPSAY|DJT(?:CONF|RALLY|CPAC|JOINTSESSION|JUSTICE|NATO|WOMENS)|WHBRIEFING/i.test(`${ticker} ${eventTicker}`)
+    || /what will .+ say|what will .+ mention|during (?:remarks|a speech|the speech|an? earnings call)|announcers? say|commentators? say/i.test(title);
+}
+
 function isElection2026(market) {
   const title = String(market.title || "");
   const ticker = String(market.ticker || "");
@@ -132,7 +140,7 @@ async function collect() {
     const body = await response.json();
     const page = Array.isArray(body.markets) ? body.markets : [];
     scanned += page.length;
-    for (const market of page) if (isElection2026(market)) targets.set(market.ticker, market);
+    for (const market of page) if (isElection2026(market) || isMentionMarket(market)) targets.set(market.ticker, market);
     cursor = body.cursor || "";
 
     if (!cursor || page.length === 0) break;
@@ -186,7 +194,7 @@ async function collect() {
       2,
     ) + "\n",
   );
-  console.log(`Scanned ${scanned}; saved ${markets.length} election and awards markets; resolved ${partyResolved} parties`);
+  console.log(`Scanned ${scanned}; saved ${markets.length} relevant markets; resolved ${partyResolved} parties`);
 }
 
 collect().catch((error) => {
